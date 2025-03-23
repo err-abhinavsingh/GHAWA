@@ -1,0 +1,1 @@
+### UUID generation has been kept simple by using google library. Collision checks are kept out of the scope of this assignment.

@@ -20,10 +20,6 @@ func NewRiskDal() *RiskDal {
 
 func (d *RiskDal) GetRisks() []*entities.Risk {
 
-	/*	if d.risks == nil || len(d.risks) == 0 {
-		log.Print("No risks found")
-		return nil
-	}*/
 	var risks []*entities.Risk
 	for _, risk := range d.risks {
 		risks = append(risks, risk)

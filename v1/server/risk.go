@@ -1,24 +1,45 @@
-package main
+package server
 
 import (
 	"GHAWA/entities"
 	"GHAWA/services"
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var (
 	riskService *services.RiskService
 )
 
-func main() {
+func StartServer() {
 	riskService = services.NewRiskService()
 
-	http.HandleFunc("/v1/risks/{id}", riskHandler)
-	http.HandleFunc("/v1/risks", risksHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/risks/{id}", riskHandler)
+	mux.HandleFunc("/v1/risks", risksHandler)
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
+	go func() {
+		signalChannel := make(chan os.Signal, 1)
+		signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
+
+		<-signalChannel
+
+		if err := server.Shutdown(context.Background()); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	log.Fatal(server.ListenAndServe())
 }
 
 func riskHandler(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +63,7 @@ func riskHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "server error", http.StatusInternalServerError)
 		}
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -91,6 +112,6 @@ func risksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, "", http.StatusMethodNotAllowed)
 	}
 }
